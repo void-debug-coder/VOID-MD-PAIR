@@ -21,8 +21,10 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: 0.2s;
         }
-        .btn:hover { background: #7CB342; }
+        .btn:hover { background: #7CB342; transform: scale(1.02); }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
         #numberInput {
             width: 90%;
             max-width: 400px;
@@ -44,65 +46,149 @@
             display: none;
         }
         #copyBtn { background: #2196F3; color: white; }
-        .footer { margin-top: 100px; color: #666; }
-        .time { position: fixed; bottom: 10px; width: 100%; color: #999; }
+        #retryBtn { background: #FF9800; color: white; display: none; }
+        .code-box {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            color: #2c3e50;
+            margin: 15px 0;
+            padding: 10px;
+            background: #fff;
+            border: 2px dashed #8BC34A;
+            border-radius: 8px;
+        }
+        .footer { margin-top: 80px; color: #666; }
+        .time { position: fixed; bottom: 10px; width: 100%; color: #999; font-size: 12px; }
+        .loading { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
     <h1>This is VOID-MD session</h1>
     
-    <input type="text" id="numberInput" placeholder="Enter WhatsApp number with country code" value="25410181691">
+    <input type="text" id="numberInput" placeholder="25410181691" value="">
     
-    <button class="btn" onclick="getPairCode()">PAIR CODE</button>
+    <button class="btn" id="pairBtn" onclick="getPairCode()">PAIR CODE</button>
     <button class="btn" onclick="window.open('https://github.com/MrVoid/VOID-MD', '_blank')">FORK VOID-MD REPO</button>
     
     <div id="result"></div>
-    <button class="btn" id="copyBtn" style="display:none;" onclick="copySession()">COPY SESSION ID</button>
+    <button class="btn" id="copyBtn" onclick="copySession()">COPY SESSION ID</button>
+    <button class="btn" id="retryBtn" onclick="getPairCode()">RETRY PAIR CODE</button>
     
     <div class="footer">© 2026</div>
     <div class="time" id="time"></div>
 
     <script>
-        const ws = new WebSocket(`wss://${window.location.host}`)
+        let ws = null
         let currentSession = ''
-        
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data)
-            if (data.sessionID) {
-                currentSession = data.sessionID
-                document.getElementById('result').style.display = 'block'
-                document.getElementById('result').innerHTML = `<b>SESSION ID GENERATED 💀</b><br><br>${data.sessionID}`
-                document.getElementById('copyBtn').style.display = 'block'
+        let currentSessionId = ''
+
+        function connectWS(sessionId) {
+            if (ws) ws.close()
+            
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+            ws = new WebSocket(`${protocol}//${window.location.host}?sessionId=${sessionId}`)
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data)
+                if (data.sessionID) {
+                    currentSession = data.sessionID
+                    document.getElementById('result').innerHTML = `
+                        <b>SESSION ID GENERATED 💀</b><br><br>
+                        <div style="font-size:12px; word-break:break-all;">${data.sessionID}</div>
+                    `
+                    document.getElementById('copyBtn').style.display = 'block'
+                    document.getElementById('retryBtn').style.display = 'none'
+                    document.getElementById('pairBtn').disabled = false
+                    document.getElementById('pairBtn').innerText = 'PAIR CODE'
+                }
+                if (data.error) {
+                    document.getElementById('result').innerHTML = `<b style="color:red;">ERROR 💀</b><br><br>${data.error}`
+                    document.getElementById('retryBtn').style.display = 'block'
+                    document.getElementById('pairBtn').disabled = false
+                    document.getElementById('pairBtn').innerText = 'PAIR CODE'
+                }
             }
-            if (data.error) {
-                alert(data.error)
+            
+            ws.onerror = () => {
+                console.log('WebSocket error')
             }
         }
-        
+
         async function getPairCode() {
-            const number = document.getElementById('numberInput').value
-            if (!number) return alert('Enter number first 💀')
+            const number = document.getElementById('numberInput').value.replace(/[^0-9]/g, '')
+            if (!number || number.length < 10) {
+                alert('Enter valid number with country code 💀\nExample: 25410181691')
+                return
+            }
             
+            document.getElementById('pairBtn').disabled = true
+            document.getElementById('pairBtn').innerText = 'GENERATING...'
             document.getElementById('result').style.display = 'block'
-            document.getElementById('result').innerHTML = 'Getting Pair Code...'
+            document.getElementById('result').innerHTML = '<span class="loading">Getting Pair Code...</span>'
+            document.getElementById('copyBtn').style.display = 'none'
+            document.getElementById('retryBtn').style.display = 'none'
             
-            const res = await fetch('/pair', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ number })
-            })
-            const data = await res.json()
-            
-            if (data.success) {
-                document.getElementById('result').innerHTML = `<b>PAIR CODE: ${data.code}</b><br><br>${data.message}<br><br>Waiting for you to link... Session ID will appear here automatically.`
-            } else {
-                document.getElementById('result').innerHTML = `ERROR: ${data.error}`
+            try {
+                const res = await fetch('/pair', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ number })
+                })
+                const data = await res.json()
+                
+                if (data.success) {
+                    currentSessionId = data.sessionId
+                    
+                    // Update URL with sessionId
+                    const url = new URL(window.location)
+                    url.searchParams.set('sessionId', data.sessionId)
+                    window.history.pushState({}, '', url)
+                    
+                    // Connect WebSocket with new sessionId
+                    connectWS(data.sessionId)
+                    
+                    document.getElementById('result').innerHTML = `
+                        <b>PAIR CODE</b><br>
+                        <div class="code-box">${data.code}</div>
+                        <b>Steps:</b><br>
+                        1. WhatsApp > Linked Devices<br>
+                        2. Link a Device > Link with phone number<br>
+                        3. Enter code above<br><br>
+                        <span class="loading">Waiting for you to link... Session ID will appear here automatically.</span>
+                    `
+                    document.getElementById('pairBtn').innerText = 'WAITING FOR LINK...'
+                } else {
+                    document.getElementById('result').innerHTML = `<b style="color:red;">ERROR 💀</b><br><br>${data.error}`
+                    document.getElementById('retryBtn').style.display = 'block'
+                    document.getElementById('pairBtn').disabled = false
+                    document.getElementById('pairBtn').innerText = 'PAIR CODE'
+                }
+            } catch (e) {
+                document.getElementById('result').innerHTML = `<b style="color:red;">NETWORK ERROR 💀</b><br><br>Server not responding. Try again.`
+                document.getElementById('retryBtn').style.display = 'block'
+                document.getElementById('pairBtn').disabled = false
+                document.getElementById('pairBtn').innerText = 'PAIR CODE'
             }
         }
         
         function copySession() {
-            navigator.clipboard.writeText(currentSession)
-            alert('Session ID Copied 💀')
+            navigator.clipboard.writeText(currentSession).then(() => {
+                document.getElementById('copyBtn').innerText = 'COPIED! 💀'
+                setTimeout(() => {
+                    document.getElementById('copyBtn').innerText = 'COPY SESSION ID'
+                }, 2000)
+            })
+        }
+        
+        // Check if returning with sessionId
+        window.onload = () => {
+            const urlSessionId = new URLSearchParams(window.location.search).get('sessionId')
+            if (urlSessionId) {
+                currentSessionId = urlSessionId
+                connectWS(urlSessionId)
+            }
         }
         
         setInterval(() => {
