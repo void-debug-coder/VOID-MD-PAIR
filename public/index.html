@@ -1,51 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOID-MD Session</title>
+    <title>VOID-MD SESSION 💀</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0a0a0a; color: #fff; font-family: 'Arial', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-       .container { background: #111; padding: 30px; border-radius: 15px; width: 100%; max-width: 400px; text-align: center; border: 2px solid #8b5cf6; }
-        h1 { color: #8b5cf6; margin-bottom: 20px; font-size: 24px; }
-        input { width: 100%; padding: 15px; margin: 15px 0; background: #1a1a1a; border: 2px solid #333; border-radius: 10px; color: #fff; font-size: 16px; text-align: center; }
-        input:focus { outline: none; border-color: #8b5cf6; }
-        button { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-       .pair-btn { background: #22c55e; color: #000; }
+        body { 
+            background: #0a0a0a; 
+            color: #fff; 
+            font-family: 'Arial', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+       .container { 
+            background: #111; 
+            padding: 30px; 
+            border-radius: 15px; 
+            width: 100%; 
+            max-width: 400px; 
+            text-align: center; 
+            border: 2px solid #8b5cf6;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+        h1 { 
+            color: #8b5cf6; 
+            margin-bottom: 20px; 
+            font-size: 24px; 
+        }
+        input { 
+            width: 100%; 
+            padding: 15px; 
+            margin: 15px 0; 
+            background: #1a1a1a; 
+            border: 2px solid #333; 
+            border-radius: 10px; 
+            color: #fff; 
+            font-size: 16px; 
+            text-align: center; 
+        }
+        input:focus { 
+            outline: none; 
+            border-color: #8b5cf6; 
+        }
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.3s; 
+        }
+       .pair-btn { 
+            background: #22c55e; 
+            color: #000; 
+        }
        .pair-btn:hover { background: #16a34a; }
-       .fork-btn { background: #8b5cf6; color: #fff; text-decoration: none; display: block; }
-       .result { margin: 20px 0; padding: 15px; border-radius: 10px; font-size: 14px; display: none; }
-       .success { background: #1a2e1a; border: 1px solid #22c55e; color: #22c55e; }
-       .error { background: #2e1a1a; border: 1px solid #ef4444; color: #ef4444; }
-       .code { font-size: 28px; font-weight: bold; letter-spacing: 5px; margin: 15px 0; color: #8b5cf6; }
-       .session { background: #1a1a1a; padding: 10px; border-radius: 5px; word-break: break-all; font-size: 11px; margin: 10px 0; }
-       .copy-btn { background: #333; color: #fff; padding: 10px; font-size: 14px; }
-       .loading { color: #fbbf24; }
+       .pair-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+       .fork-btn { 
+            background: #8b5cf6; 
+            color: #fff; 
+            text-decoration: none; 
+            display: block; 
+        }
+       .fork-btn:hover { background: #7c3aed; }
+       .result { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border-radius: 10px; 
+            font-size: 14px; 
+            display: none; 
+        }
+       .success { 
+            background: #1a2e1a; 
+            border: 1px solid #22c55e; 
+            color: #22c55e; 
+        }
+       .error { 
+            background: #2e1a1a; 
+            border: 1px solid #ef4444; 
+            color: #ef4444; 
+        }
+       .loading { 
+            background: #2e2a1a; 
+            border: 1px solid #fbbf24; 
+            color: #fbbf24; 
+        }
+       .code { 
+            font-size: 28px; 
+            font-weight: bold; 
+            letter-spacing: 5px; 
+            margin: 15px 0; 
+            color: #8b5cf6; 
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>VOID-MD SESSION 💀</h1>
         <input type="text" id="number" placeholder="254112842071" maxlength="15">
-        <button class="pair-btn" onclick="getCode()">GET PAIR CODE</button>
+        <button class="pair-btn" id="pairBtn" onclick="getCode()">GET PAIR CODE</button>
         <a href="https://github.com/void-debug-coder/VOID-MD" class="fork-btn">FORK VOID-MD REPO</a>
         <div id="result" class="result"></div>
     </div>
 
     <script>
-        let ws, sessionId
-        
         async function getCode() {
             const number = document.getElementById('number').value.replace(/[^0-9]/g, '')
             const result = document.getElementById('result')
+            const btn = document.getElementById('pairBtn')
             
             if (number.length < 11) {
                 showResult('Enter valid number: 254...', 'error')
                 return
             }
             
-            showResult('Connecting...', 'loading')
+            btn.disabled = true
+            showResult('Connecting to WhatsApp...', 'loading')
             
             try {
                 const res = await fetch('/pair', {
@@ -56,29 +133,15 @@
                 const data = await res.json()
                 
                 if (data.success) {
-                    sessionId = data.sessionId
-                    showResult(`PAIR CODE: <div class="code">${data.code}</div>Enter this in WhatsApp > Linked Devices<br><br>Keep this page open for Session ID...`, 'success')
-                    connectWebSocket()
+                    showResult(`PAIR CODE: <div class="code">${data.code}</div>1. Open WhatsApp<br>2. Linked Devices > Link a Device<br>3. Link with phone number instead<br>4. Enter this code`, 'success')
                 } else {
                     showResult(`ERROR 💀<br>${data.error}`, 'error')
                 }
             } catch (e) {
-                showResult('NETWORK ERROR 💀<br>Server not responding. Try again.', 'error')
+                showResult('NETWORK ERROR 💀<br>Server not responding. Check Render logs.', 'error')
             }
-        }
-        
-        function connectWebSocket() {
-            const protocol = window.location.protocol === 'https:'? 'wss:' : 'ws:'
-            ws = new WebSocket(`${protocol}//${window.location.host}?sessionId=${sessionId}`)
             
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data)
-                if (data.type === 'session') {
-                    showResult(`SESSION ID GENERATED 💀<div class="session">${data.sessionID}</div>
-                    <button class="copy-btn" onclick="copySession('${data.sessionID}')">COPY SESSION ID</button>
-                    <br><br>Paste this in config.js`, 'success')
-                }
-            }
+            btn.disabled = false
         }
         
         function showResult(msg, type) {
@@ -87,11 +150,11 @@
             result.innerHTML = msg
             result.style.display = 'block'
         }
-        
-        function copySession(text) {
-            navigator.clipboard.writeText(text)
-            alert('Session ID copied 💀')
-        }
+
+        // Auto-format number input
+        document.getElementById('number').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '')
+        })
     </script>
 </body>
 </html>
